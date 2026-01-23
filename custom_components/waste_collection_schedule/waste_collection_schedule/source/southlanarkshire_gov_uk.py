@@ -55,7 +55,7 @@ SORT_ORDER = {
 
 
 class Source:
-    def __init__(self, record_id: str | int, street_name: str, pdf_url: str = None):
+    def __init__(self, record_id: str | int, street_name: str, pdf_url: str):
         self._record_id = str(record_id).zfill(6)
         self._street_name = str(street_name)
         self._pdf_url = pdf_url
