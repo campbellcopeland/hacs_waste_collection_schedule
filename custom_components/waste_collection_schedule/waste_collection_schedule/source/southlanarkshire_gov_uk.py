@@ -14,6 +14,7 @@ HOW_TO_GET_ARGUMENTS_DESCRIPTION = {
 
 PARAM_TRANSLATIONS = {
     "en": {
+        "calendar_title": "Calendar Title",
         "record_id": "Directory Record ID",
         "street_name": "Street Name",
         "pdf_url": "Collection Calendar PDF URL",
@@ -22,6 +23,7 @@ PARAM_TRANSLATIONS = {
 
 PARAM_DESCRIPTIONS = {
     "en": {
+        "calendar_title": "A more readable, or user-friendly, name for the waste calendar. If nothing is provided, the name returned by the source will be used.",
         "record_id": "The 6-digit number in your URL (e.g., 574605).",
         "street_name": "The text at the end of your URL (e.g., clincarthill_road_rutherglen).",
         "pdf_url": "Full URL to council's bin collection calendar PDF. Find the current year's calendar at https://www.southlanarkshire.gov.uk/downloads/download/791/bin_collection_calendars and copy the PDF link. Example: https://www.southlanarkshire.gov.uk/download/downloads/id/18301/bin_collection_calendar_2026.pdf",

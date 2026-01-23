@@ -17516,6 +17516,38 @@
           "usrn": "Your Unique Street Reference Number (USRN) can be found by searching for your address at https://uprn.uk/ and viewing the _Data Associations_ section."
         }
       },
+      "args_southlanarkshire_gov_uk": {
+        "title": "Configure Source",
+        "description": "Configure your service provider. \n\nFind your street on the South Lanarkshire website. The URL format is `.../directory_record/574605/clincarthill_road_rutherglen`. Record ID is `574605` and Street Name is `clincarthill_road_rutherglen`.\n\nMore details: https://github.com/mampfes/hacs_waste_collection_schedule/blob/master/doc/source/southlanarkshire_gov_uk.md.",
+        "data": {
+          "calendar_title": "Calendar Title",
+          "record_id": "Directory Record ID",
+          "street_name": "Street Name",
+          "pdf_url": "Collection Calendar PDF URL"
+        },
+        "data_description": {
+          "calendar_title": "A more readable, or user-friendly, name for the waste calendar. If nothing is provided, the name returned by the source will be used.",
+          "record_id": "The 6-digit number in your URL (e.g., 574605).",
+          "street_name": "The text at the end of your URL (e.g., clincarthill_road_rutherglen).",
+          "pdf_url": "Full URL to council's bin collection calendar PDF. Find the current year's calendar at https://www.southlanarkshire.gov.uk/downloads/download/791/bin_collection_calendars and copy the PDF link. Example: https://www.southlanarkshire.gov.uk/download/downloads/id/18301/bin_collection_calendar_2026.pdf"
+        }
+      },
+      "reconfigure_southlanarkshire_gov_uk": {
+        "title": "Reconfigure Source",
+        "description": "Configure your service provider. \n\nFind your street on the South Lanarkshire website. The URL format is `.../directory_record/574605/clincarthill_road_rutherglen`. Record ID is `574605` and Street Name is `clincarthill_road_rutherglen`.\n\nMore details: https://github.com/mampfes/hacs_waste_collection_schedule/blob/master/doc/source/southlanarkshire_gov_uk.md.",
+        "data": {
+          "calendar_title": "Calendar Title",
+          "record_id": "Directory Record ID",
+          "street_name": "Street Name",
+          "pdf_url": "Collection Calendar PDF URL"
+        },
+        "data_description": {
+          "calendar_title": "A more readable, or user-friendly, name for the waste calendar. If nothing is provided, the name returned by the source will be used.",
+          "record_id": "The 6-digit number in your URL (e.g., 574605).",
+          "street_name": "The text at the end of your URL (e.g., clincarthill_road_rutherglen).",
+          "pdf_url": "Full URL to council's bin collection calendar PDF. Find the current year's calendar at https://www.southlanarkshire.gov.uk/downloads/download/791/bin_collection_calendars and copy the PDF link. Example: https://www.southlanarkshire.gov.uk/download/downloads/id/18301/bin_collection_calendar_2026.pdf"
+        }
+      },
       "args_northlincs_gov_uk": {
         "title": "Configure Source",
         "description": "Configure your service provider. More details: https://github.com/mampfes/hacs_waste_collection_schedule/blob/master/doc/source/northlincs_gov_uk.md.",
@@ -20315,37 +20347,6 @@
           "street_address": "Street Address"
         },
         "data_description": {}
-      },
-      "args_southlanarkshire_gov_uk": {
-        "title": "Configure Source",
-        "description": "Configure your service provider. \n\nFind your street on the South Lanarkshire website. The URL format is `.../directory_record/574605/clincarthill_road_rutherglen`. Record ID is `574605` and Street Name is `clincarthill_road_rutherglen`.\n\nMore details: https://github.com/mampfes/hacs_waste_collection_schedule/blob/master/doc/source/southlanarkshire_gov_uk.md.",
-        "data": {
-          "calendar_title": "Calendar Title",
-          "record_id": "Directory Record ID",
-          "street_name": "Street Name",
-          "pdf_url": "Collection Calendar PDF URL"
-        },
-        "data_description": {
-          "calendar_title": "A more readable, or user-friendly, name for the waste calendar. If nothing is provided, the name returned by the source will be used.",
-          "record_id": "The 6-digit number in your URL (e.g., 574605).",
-          "street_name": "The text at the end of your URL (e.g., clincarthill_road_rutherglen).",
-          "pdf_url": "Full URL to council's bin collection calendar PDF. Find the current year's calendar at https://www.southlanarkshire.gov.uk/downloads/download/791/bin_collection_calendars and copy the PDF link. Example: https://www.southlanarkshire.gov.uk/download/downloads/id/18301/bin_collection_calendar_2026.pdf"
-        }
-      },
-      "reconfigure_southlanarkshire_gov_uk": {
-        "title": "Reconfigure Source",
-        "description": "Configure your service provider. \n\nFind your street on the South Lanarkshire website. The URL format is `.../directory_record/574605/clincarthill_road_rutherglen`. Record ID is `574605` and Street Name is `clincarthill_road_rutherglen`.\n\nMore details: https://github.com/mampfes/hacs_waste_collection_schedule/blob/master/doc/source/southlanarkshire_gov_uk.md.",
-        "data": {
-          "calendar_title": "Calendar Title",
-          "record_id": "Directory Record ID",
-          "street_name": "Street Name",
-          "pdf_url": "Collection Calendar PDF URL"
-        },
-        "data_description": {
-          "record_id": "The 6-digit number in your URL (e.g., 574605).",
-          "street_name": "The text at the end of your URL (e.g., clincarthill_road_rutherglen).",
-          "pdf_url": "Full URL to council's bin collection calendar PDF. Find the current year's calendar at https://www.southlanarkshire.gov.uk/downloads/download/791/bin_collection_calendars and copy the PDF link. Example: https://www.southlanarkshire.gov.uk/download/downloads/id/18301/bin_collection_calendar_2026.pdf"
-        }
       }
     },
     "error": {
