@@ -263,10 +263,15 @@ class Source:
     
     def _identify_bins_from_pdf_lines(self, lines, current_line_idx):
         """Extract bin types from PDF text around a date."""
+        import logging
+        logger = logging.getLogger(__name__)
+        
         bins = set()
         
-        # Look at next few lines after the date for bin information
-        for i in range(current_line_idx + 1, min(current_line_idx + 5, len(lines))):
+        # Search the current line AND surrounding lines (before and after)
+        search_range = range(max(0, current_line_idx - 2), min(current_line_idx + 10, len(lines)))
+        
+        for i in search_range:
             line_lower = lines[i].lower()
             if "black" in line_lower or "green" in line_lower:
                 bins.add("black")
@@ -276,6 +281,9 @@ class Source:
                 bins.add("grey")
             if "burgundy" in line_lower or "brown" in line_lower:
                 bins.add("burgundy")
+        
+        if bins:
+            logger.warning(f"Line {current_line_idx}: identified bins {bins} from surrounding text")
         
         return self._identify_bin_combination(bins) if bins else None
     
