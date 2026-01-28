@@ -29,7 +29,7 @@ PARAM_DESCRIPTIONS = {
         "calendar_title": "A more readable, or user-friendly, name for the waste calendar. If nothing is provided, the name returned by the source will be used.",
         "record_id": "The 6-digit number in your URL (e.g., 574605).",
         "street_name": "The text at the end of your URL (e.g., clincarthill_road_rutherglen).",
-        "pdf_url": "Full URL to council's bin collection calendar PDF. This is used to determine your exact position in the 4-week collection cycle. Find PDFs at https://www.southlanarkshire.gov.uk/downloads/download/791/bin_collection_calendars",
+        "pdf_url": "REQUIRED: Full URL to council's bin collection calendar PDF. This is essential for determining your exact position in the 4-week collection cycle, as black bins appear twice per cycle. Find PDFs at https://www.southlanarkshire.gov.uk/downloads/download/791/bin_collection_calendars",
     }
 }
 
@@ -66,7 +66,11 @@ SORT_ORDER = {
 class Source:
     def __init__(self, record_id: str | int, street_name: str, pdf_url: str):
         if not pdf_url:
-            raise ValueError("pdf_url is required to determine collection cycle")
+            raise ValueError(
+                "pdf_url is required to determine collection cycle position. "
+                "Black bins appear twice in the 4-week cycle, making position impossible to determine without PDF reference. "
+                "Find PDFs at: https://www.southlanarkshire.gov.uk/downloads/download/791/bin_collection_calendars"
+            )
         self._record_id = str(record_id).zfill(6)
         self._street_name = str(street_name)
         self._pdf_url = pdf_url
