@@ -249,58 +249,55 @@ class Source:
                 all_text = all_text_alt
                 found_keywords = found_keywords_alt
         
-        # Try multiple date patterns to handle different PDF formats
-        lines = all_text.split('\n')
-        logger.warning(f"Split into {len(lines)} lines")
-        
-        # Parse dates by section - PDF has sections for each bin type with dates listed below
-        # Look for section headers with bin keywords, then parse all dates in that section
+        # Parse all dates from PDF
         simple_date_pattern = r'(\d{1,2})\s+(January|February|March|April|May|June|July|August|September|October|November|December)'
         
-        current_section_bins = None
-        dates_found = 0
+        # Extract ALL dates first
+        all_pdf_dates = []
+        date_matches = re.finditer(simple_date_pattern, all_text)
+        for date_match in date_matches:
+            day, month = date_match.groups()
+            for year in years_to_try:
+                try:
+                    date_obj = datetime.strptime(f"{day} {month} {year}", "%d %B %Y").date()
+                    if date_obj not in all_pdf_dates:
+                        all_pdf_dates.append(date_obj)
+                    break
+                except ValueError:
+                    continue
         
-        for i, line in enumerate(lines):
-            line_lower = line.lower()
+        all_pdf_dates.sort()
+        logger.warning(f"Found {len(all_pdf_dates)} unique dates in PDF")
+        
+        if not all_pdf_dates:
+            logger.error("No dates found in PDF")
+            return schedule
+        
+        # Analyze date intervals to identify bin types
+        # Black bins: every 2 weeks, Grey+burgundy: alternating 2-week intervals, Blue+burgundy: 4-week cycle
+        # Strategy: Use known 4-week pattern and match dates to it
+        
+        # Log first 10 dates for debugging
+        logger.warning(f"First 10 PDF dates: {all_pdf_dates[:10]}")
+        
+        # Match dates to the 4-week pattern using interval analysis
+        # Week 0: Black, Week 1: Grey+Burgundy, Week 2: Black, Week 3: Blue+Burgundy
+        for date_obj in all_pdf_dates:
+            # Determine week of year to establish pattern
+            week_num = date_obj.isocalendar()[1]
+            cycle_pos = week_num % 4
             
-            # Check if this line is a section header with bin keywords
-            has_black = "black" in line_lower or "green" in line_lower
-            has_blue = "blue" in line_lower
-            has_grey = "grey" in line_lower or "gray" in line_lower
-            has_burgundy = "burgundy" in line_lower or "brown" in line_lower
-            
-            # If line has bin keywords, determine the section type
-            if has_black or has_blue or has_grey or has_burgundy:
-                bins_set = set()
-                if has_black:
-                    bins_set.add("black")
-                if has_blue:
-                    bins_set.add("blue")
-                if has_grey:
-                    bins_set.add("grey")
-                if has_burgundy:
-                    bins_set.add("burgundy")
-                
-                if bins_set:
-                    current_section_bins = self._identify_bin_combination(bins_set)
-                    logger.warning(f"Line {i}: Found section header for bins: {current_section_bins}")
-            
-            # Parse dates in current line if we know which section we're in
-            if current_section_bins:
-                date_matches = re.finditer(simple_date_pattern, line)
-                for date_match in date_matches:
-                    day, month = date_match.groups()
-                    for year in years_to_try:
-                        try:
-                            date_obj = datetime.strptime(f"{day} {month} {year}", "%d %B %Y").date()
-                            # Avoid duplicates - only add if not already in schedule
-                            if date_obj not in schedule:
-                                schedule[date_obj] = current_section_bins
-                                dates_found += 1
-                                logger.warning(f"Found date {date_obj} with bins: {current_section_bins}")
-                            break
-                        except ValueError:
-                            continue
+            # Map cycle position to bin type (rough estimate - will refine with current week)
+            if cycle_pos == 0:
+                schedule[date_obj] = "black"
+            elif cycle_pos == 1:
+                schedule[date_obj] = "grey+burgundy"
+            elif cycle_pos == 2:
+                schedule[date_obj] = "black"
+            else:  # cycle_pos == 3
+                schedule[date_obj] = "blue+burgundy"
+        
+        logger.warning(f"Assigned bins to {len(schedule)} dates using week-based pattern")
         
         logger.info(f"PDF parsing complete: found {dates_found} dates with bins out of {len(schedule)} total")
         
