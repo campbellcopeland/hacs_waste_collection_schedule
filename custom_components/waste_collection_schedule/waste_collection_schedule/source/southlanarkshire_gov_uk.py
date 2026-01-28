@@ -76,6 +76,9 @@ class Source:
         self._pdf_url = pdf_url
     
     def fetch(self):
+        import logging
+        logger = logging.getLogger(__name__)
+        
         # Get current week's bins from website
         s = requests.Session()
         s.headers.update({"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
@@ -139,10 +142,14 @@ class Source:
         days_to_collection = (collection_day_num - current_week_start.weekday()) % 7
         current_collection_date = current_week_start + timedelta(days=days_to_collection)
         
+        logger.warning(f"Current week start: {current_week_start}, Collection day: {collection_day}, First collection date: {current_collection_date}")
+        
         # Parse PDF to determine position in 4-week cycle
         pdf_schedule = self._parse_pdf_schedule()
         cycle_position = self._determine_cycle_position(current_week_start, pdf_schedule)
         pattern_cycle = self._get_pattern_from_cycle_position(cycle_position)
+        
+        logger.warning(f"Cycle position detected: {cycle_position}, Pattern: {pattern_cycle}")
         
         collections = []
         for week_offset in range(52):
@@ -162,6 +169,12 @@ class Source:
             return (entry.date, sort_order)
         
         collections.sort(key=get_sort_key)
+        
+        # Log first 20 collections being passed to HA calendar
+        logger.warning(f"Total collections being sent to HA: {len(collections)}")
+        for i, collection in enumerate(collections[:20]):
+            logger.warning(f"  [{i+1}] {collection.date} ({collection.date.strftime('%A')}): {collection.t} (icon: {collection.icon})")
+        
         return collections
     
     def _parse_pdf_schedule(self):
