@@ -176,7 +176,7 @@ class Source:
         logger.debug(f"Downloading PDF from: {self._pdf_url}")
         response = s.get(self._pdf_url, timeout=30)
         response.raise_for_status()
-        logger.debug(f"PDF downloaded, size: {len(response.content)} bytes}")
+        logger.debug(f"PDF downloaded, size: {len(response.content)} bytes")
         
         pdf_reader = PdfReader(BytesIO(response.content))
         schedule = {}
@@ -210,7 +210,7 @@ class Source:
                 all_text += text + "\n"
                 logger.debug(f"Page {page_num + 1}: extracted {len(text)} characters")
             else:
-                logger.debug(f"Page {page_num + 1}: no text extracted}")
+                logger.debug(f"Page {page_num + 1}: no text extracted")
         
         logger.debug(f"Total text extracted: {len(all_text)} characters")
         
