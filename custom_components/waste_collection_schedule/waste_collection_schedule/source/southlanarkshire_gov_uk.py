@@ -1,8 +1,10 @@
 from datetime import datetime, timedelta
 import re
+from io import BytesIO
 
 import requests
 from bs4 import BeautifulSoup
+from pypdf import PdfReader
 from waste_collection_schedule import Collection  # type: ignore[attr-defined]
 
 TITLE = "South Lanarkshire Council"
@@ -18,7 +20,7 @@ PARAM_TRANSLATIONS = {
         "calendar_title": "Calendar Title",
         "record_id": "Directory Record ID",
         "street_name": "Street Name",
-        "pdf_url": "Collection Calendar PDF URL (optional)",
+        "pdf_url": "Collection Calendar PDF URL",
     }
 }
 
@@ -27,7 +29,7 @@ PARAM_DESCRIPTIONS = {
         "calendar_title": "A more readable, or user-friendly, name for the waste calendar. If nothing is provided, the name returned by the source will be used.",
         "record_id": "The 6-digit number in your URL (e.g., 574605).",
         "street_name": "The text at the end of your URL (e.g., clincarthill_road_rutherglen).",
-        "pdf_url": "(Optional) Full URL to council's bin collection calendar PDF. The schedule is determined from your current week's bins, so this is optional but can be provided for reference. Find PDFs at https://www.southlanarkshire.gov.uk/downloads/download/791/bin_collection_calendars",
+        "pdf_url": "Full URL to council's bin collection calendar PDF. This is used to determine your exact position in the 4-week collection cycle. Find PDFs at https://www.southlanarkshire.gov.uk/downloads/download/791/bin_collection_calendars",
     }
 }
 
@@ -62,12 +64,15 @@ SORT_ORDER = {
 
 
 class Source:
-    def __init__(self, record_id: str | int, street_name: str, pdf_url: str = None):
+    def __init__(self, record_id: str | int, street_name: str, pdf_url: str):
+        if not pdf_url:
+            raise ValueError("pdf_url is required to determine collection cycle")
         self._record_id = str(record_id).zfill(6)
         self._street_name = str(street_name)
         self._pdf_url = pdf_url
     
     def fetch(self):
+        # Get current week's bins from website
         s = requests.Session()
         s.headers.update({"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
         
@@ -127,12 +132,13 @@ class Source:
         }
         collection_day_num = day_map[collection_day]
         
-        current_week_bins = self._identify_bin_combination(bins_this_week)
-        
         days_to_collection = (collection_day_num - current_week_start.weekday()) % 7
         current_collection_date = current_week_start + timedelta(days=days_to_collection)
         
-        pattern_cycle = self._determine_pattern_cycle(current_week_bins)
+        # Parse PDF to determine position in 4-week cycle
+        pdf_schedule = self._parse_pdf_schedule()
+        cycle_position = self._determine_cycle_position(current_week_start, pdf_schedule)
+        pattern_cycle = self._get_pattern_from_cycle_position(cycle_position)
         
         collections = []
         for week_offset in range(52):
@@ -154,35 +160,122 @@ class Source:
         collections.sort(key=get_sort_key)
         return collections
     
-    def _identify_bin_combination(self, bins_this_week_set):
-        has_black = any("black" in b or "green" in b for b in bins_this_week_set)
-        has_blue = any("blue" in b for b in bins_this_week_set)
-        has_grey = any("grey" in b or "gray" in b for b in bins_this_week_set)
-        has_burgundy = any("burgundy" in b for b in bins_this_week_set)
+    def _parse_pdf_schedule(self):
+        """Parse PDF to extract bin collection schedule for multiple weeks."""
+        s = requests.Session()
+        s.headers.update({"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
         
-        if has_black:
-            return "black"
-        elif has_blue and has_burgundy:
-            return "blue+burgundy"
-        elif has_blue:
-            return "blue+burgundy"
-        elif has_grey and has_burgundy:
-            return "grey+burgundy"
-        elif has_grey:
-            return "grey+burgundy"
-        else:
-            return "black"
+        response = s.get(self._pdf_url)
+        response.raise_for_status()
+        
+        pdf_reader = PdfReader(BytesIO(response.content))
+        schedule = {}
+        
+        # Extract text from all pages and parse dates and bins
+        for page_num in range(len(pdf_reader.pages)):
+            page = pdf_reader.pages[page_num]
+            text = page.extract_text()
+            
+            # Look for date patterns and associated bins
+            # Format: Date followed by bin types
+            lines = text.split('\n')
+            for i, line in enumerate(lines):
+                # Look for date patterns (e.g., "Monday 5 January")
+                date_match = re.search(r'(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\s+(\d{1,2})\s+(January|February|March|April|May|June|July|August|September|October|November|December)', line)
+                if date_match:
+                    day_name, day, month = date_match.groups()
+                    # Try to parse the date with current year
+                    try:
+                        date_obj = datetime.strptime(f"{day} {month} 2026", "%d %B %Y").date()
+                        bins_for_this_week = self._identify_bins_from_pdf_lines(lines, i)
+                        if bins_for_this_week:
+                            schedule[date_obj] = bins_for_this_week
+                    except ValueError:
+                        continue
+        
+        return schedule
     
-    def _determine_pattern_cycle(self, current_week_bins):
+    def _identify_bins_from_pdf_lines(self, lines, current_line_idx):
+        """Extract bin types from PDF text around a date."""
+        bins = set()
+        
+        # Look at next few lines after the date for bin information
+        for i in range(current_line_idx + 1, min(current_line_idx + 5, len(lines))):
+            line_lower = lines[i].lower()
+            if "black" in line_lower or "green" in line_lower:
+                bins.add("black")
+            if "blue" in line_lower:
+                bins.add("blue")
+            if "grey" in line_lower or "gray" in line_lower:
+                bins.add("grey")
+            if "burgundy" in line_lower or "brown" in line_lower:
+                bins.add("burgundy")
+        
+        return self._identify_bin_combination(bins) if bins else None
+    
+    def _determine_cycle_position(self, current_week_date, pdf_schedule):
+        """Determine where in the 4-week cycle we are based on PDF data."""
+        # Find entries from PDF that are closest to current week
+        sorted_dates = sorted([d for d in pdf_schedule.keys() if d >= current_week_date - timedelta(days=30)])
+        
+        if not sorted_dates:
+            raise Exception("Could not find current week in PDF schedule")
+        
+        # Get the bin combination for the current week from PDF
+        pdf_week_date = sorted_dates[0]
+        current_week_type = pdf_schedule[pdf_week_date]
+        
+        # Get the next few weeks from PDF to establish the cycle
+        cycle_from_pdf = []
+        for i in range(4):
+            check_date = pdf_week_date + timedelta(weeks=i)
+            # Find closest matching date
+            closest = min([d for d in pdf_schedule.keys() if d >= check_date - timedelta(days=7)], 
+                         key=lambda d: abs(d - check_date), default=None)
+            if closest and closest in pdf_schedule:
+                cycle_from_pdf.append(pdf_schedule[closest])
+        
+        # Map cycle_from_pdf to a position (0-3) based on known patterns
+        if len(cycle_from_pdf) >= 2:
+            first_type = cycle_from_pdf[0]
+            second_type = cycle_from_pdf[1] if len(cycle_from_pdf) > 1 else None
+            
+            # Determine position based on the sequence
+            if first_type == "black" and second_type == "grey+burgundy":
+                return 0  # Black is at position 0
+            elif first_type == "grey+burgundy" and second_type == "black":
+                return 1  # Grey+Burgundy is at position 1
+            elif first_type == "blue+burgundy" and second_type == "black":
+                return 2  # Blue+Burgundy is at position 2
+            elif first_type == "black" and second_type == "blue+burgundy":
+                return 3  # Second Black is at position 3
+        
+        # Fallback: assume position 0
+        return 0
+    
+    def _get_pattern_from_cycle_position(self, position):
+        """Get the 4-week repeating pattern based on position."""
         black_bins = ["Black/Green - Non Recyclable Waste"]
         blue_burgundy_bins = ["Blue (paper and card)", "Burgundy - Food and garden"]
         grey_burgundy_bins = ["Light Grey - Glass, cans and plastics", "Burgundy - Food and garden"]
         
-        if current_week_bins == "black":
-            return [black_bins, grey_burgundy_bins, black_bins, blue_burgundy_bins]
-        elif current_week_bins == "grey+burgundy":
-            return [grey_burgundy_bins, black_bins, blue_burgundy_bins, black_bins]
-        elif current_week_bins == "blue+burgundy":
-            return [blue_burgundy_bins, black_bins, grey_burgundy_bins, black_bins]
+        base_pattern = [black_bins, grey_burgundy_bins, black_bins, blue_burgundy_bins]
+        
+        # Rotate pattern based on position
+        return base_pattern[position:] + base_pattern[:position]
+    def _identify_bin_combination(self, bins_set):
+        """Convert bin set to standardized type string."""
+        has_black = any("black" in str(b).lower() or "green" in str(b).lower() for b in bins_set)
+        has_blue = any("blue" in str(b).lower() for b in bins_set)
+        has_grey = any("grey" in str(b).lower() or "gray" in str(b).lower() for b in bins_set)
+        has_burgundy = any("burgundy" in str(b).lower() or "brown" in str(b).lower() for b in bins_set)
+        
+        if has_black:
+            return "black"
+        elif (has_blue or has_grey) and has_burgundy:
+            if has_blue:
+                return "blue+burgundy"
+            else:
+                return "grey+burgundy"
         else:
-            return [black_bins, grey_burgundy_bins, black_bins, blue_burgundy_bins]
+            return "black"
