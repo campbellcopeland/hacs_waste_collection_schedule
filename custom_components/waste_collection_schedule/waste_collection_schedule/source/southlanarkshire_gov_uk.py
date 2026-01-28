@@ -230,33 +230,54 @@ class Source:
         lines = all_text.split('\n')
         logger.warning(f"Split into {len(lines)} lines")
         
-        # Most common pattern: just "5 January" without day name
+        # Parse dates by section - PDF has sections for each bin type with dates listed below
+        # Look for section headers with bin keywords, then parse all dates in that section
         simple_date_pattern = r'(\d{1,2})\s+(January|February|March|April|May|June|July|August|September|October|November|December)'
         
+        current_section_bins = None
         dates_found = 0
+        
         for i, line in enumerate(lines):
-            # Find all date matches in this line
-            date_matches = re.finditer(simple_date_pattern, line)
-            for date_match in date_matches:
-                day, month = date_match.groups()
-                for year in years_to_try:
-                    try:
-                        date_obj = datetime.strptime(f"{day} {month} {year}", "%d %B %Y").date()
-                        bins_for_this_week = self._identify_bins_from_pdf_lines(lines, i)
-                        if bins_for_this_week:
-                            schedule[date_obj] = bins_for_this_week
-                            dates_found += 1
-                            logger.warning(f"Found date {date_obj} with bins: {bins_for_this_week}")
+            line_lower = line.lower()
+            
+            # Check if this line is a section header with bin keywords
+            has_black = "black" in line_lower or "green" in line_lower
+            has_blue = "blue" in line_lower
+            has_grey = "grey" in line_lower or "gray" in line_lower
+            has_burgundy = "burgundy" in line_lower or "brown" in line_lower
+            
+            # If line has bin keywords, determine the section type
+            if has_black or has_blue or has_grey or has_burgundy:
+                bins_set = set()
+                if has_black:
+                    bins_set.add("black")
+                if has_blue:
+                    bins_set.add("blue")
+                if has_grey:
+                    bins_set.add("grey")
+                if has_burgundy:
+                    bins_set.add("burgundy")
+                
+                if bins_set:
+                    current_section_bins = self._identify_bin_combination(bins_set)
+                    logger.warning(f"Line {i}: Found section header for bins: {current_section_bins}")
+            
+            # Parse dates in current line if we know which section we're in
+            if current_section_bins:
+                date_matches = re.finditer(simple_date_pattern, line)
+                for date_match in date_matches:
+                    day, month = date_match.groups()
+                    for year in years_to_try:
+                        try:
+                            date_obj = datetime.strptime(f"{day} {month} {year}", "%d %B %Y").date()
+                            # Avoid duplicates - only add if not already in schedule
+                            if date_obj not in schedule:
+                                schedule[date_obj] = current_section_bins
+                                dates_found += 1
+                                logger.warning(f"Found date {date_obj} with bins: {current_section_bins}")
                             break
-                        else:
-                            # Log surrounding text when bins not found
-                            start_idx = max(0, i - 2)
-                            end_idx = min(len(lines), i + 3)
-                            context = " | ".join(lines[start_idx:end_idx])
-                            if dates_found < 5:  # Only log first few failures
-                                logger.warning(f"Date {date_obj} found but NO BINS. Context: {context[:200]}")
-                    except ValueError:
-                        continue
+                        except ValueError:
+                            continue
         
         logger.info(f"PDF parsing complete: found {dates_found} dates with bins out of {len(schedule)} total")
         
