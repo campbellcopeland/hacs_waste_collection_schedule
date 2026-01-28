@@ -165,7 +165,8 @@ class Source:
         s = requests.Session()
         s.headers.update({"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
         
-        response = s.get(self._pdf_url)
+        # Add timeout to prevent hanging in Home Assistant
+        response = s.get(self._pdf_url, timeout=30)
         response.raise_for_status()
         
         pdf_reader = PdfReader(BytesIO(response.content))
@@ -185,7 +186,12 @@ class Source:
         all_text = ""
         for page_num in range(len(pdf_reader.pages)):
             page = pdf_reader.pages[page_num]
-            text = page.extract_text(extraction_mode="layout")
+            # Try layout mode first, fall back to default if not supported
+            try:
+                text = page.extract_text(extraction_mode="layout")
+            except (TypeError, AttributeError):
+                # Older pypdf versions don't support extraction_mode parameter
+                text = page.extract_text()
             if text:
                 all_text += text + "\n"
         
