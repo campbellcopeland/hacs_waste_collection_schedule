@@ -221,6 +221,11 @@ class Source:
         # Log first 500 chars to help debug
         logger.warning(f"First 500 chars of PDF text: {all_text[:500]}")
         
+        # Check if bin keywords exist ANYWHERE in the PDF
+        bin_keywords = ["black", "blue", "grey", "gray", "burgundy", "brown", "green"]
+        found_keywords = [kw for kw in bin_keywords if kw in all_text.lower()]
+        logger.warning(f"Bin keywords found in entire PDF: {found_keywords}")
+        
         # Try multiple date patterns to handle different PDF formats
         lines = all_text.split('\n')
         logger.warning(f"Split into {len(lines)} lines")
@@ -244,7 +249,12 @@ class Source:
                             logger.warning(f"Found date {date_obj} with bins: {bins_for_this_week}")
                             break
                         else:
-                            logger.warning(f"Found date {date_obj} but no bins identified")
+                            # Log surrounding text when bins not found
+                            start_idx = max(0, i - 2)
+                            end_idx = min(len(lines), i + 3)
+                            context = " | ".join(lines[start_idx:end_idx])
+                            if dates_found < 5:  # Only log first few failures
+                                logger.warning(f"Date {date_obj} found but NO BINS. Context: {context[:200]}")
                     except ValueError:
                         continue
         
