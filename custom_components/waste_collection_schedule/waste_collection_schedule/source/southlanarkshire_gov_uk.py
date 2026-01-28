@@ -222,40 +222,18 @@ class Source:
         logger.warning(f"First 500 chars of PDF text: {all_text[:500]}")
         
         # Try multiple date patterns to handle different PDF formats
-        date_patterns = [
-            r'(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\s+(\d{1,2})\s+(January|February|March|April|May|June|July|August|September|October|November|December)',
-            r'(\d{1,2})\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)',
-            r'(\d{1,2})/(\d{1,2})/(20\d{2})',  # DD/MM/YYYY format
-        ]
-        
         lines = all_text.split('\n')
         logger.warning(f"Split into {len(lines)} lines")
         
+        # Most common pattern: just "5 January" without day name
+        simple_date_pattern = r'(\d{1,2})\s+(January|February|March|April|May|June|July|August|September|October|November|December)'
+        
         dates_found = 0
         for i, line in enumerate(lines):
-            # Try first pattern: "Monday 5 January"
-            date_match = re.search(date_patterns[0], line)
-            if date_match:
-                day_name, day, month = date_match.groups()
-                for year in years_to_try:
-                    try:
-                        date_obj = datetime.strptime(f"{day} {month} {year}", "%d %B %Y").date()
-                        bins_for_this_week = self._identify_bins_from_pdf_lines(lines, i)
-                        if bins_for_this_week:
-                            schedule[date_obj] = bins_for_this_week
-                            dates_found += 1
-                            logger.warning(f"Found date {date_obj} with bins: {bins_for_this_week}")
-                            break
-                        else:
-                            logger.warning(f"Found date {date_obj} but no bins identified")
-                    except ValueError:
-                        continue
-                continue
-            
-            # Try second pattern: "5 January Monday"
-            date_match = re.search(date_patterns[1], line)
-            if date_match:
-                day, month, day_name = date_match.groups()
+            # Find all date matches in this line
+            date_matches = re.finditer(simple_date_pattern, line)
+            for date_match in date_matches:
+                day, month = date_match.groups()
                 for year in years_to_try:
                     try:
                         date_obj = datetime.strptime(f"{day} {month} {year}", "%d %B %Y").date()
