@@ -173,15 +173,15 @@ class Source:
         s.headers.update({"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
         
         # Add timeout to prevent hanging in Home Assistant
-        logger.warning(f"Downloading PDF from: {self._pdf_url}")
+        logger.debug(f"Downloading PDF from: {self._pdf_url}")
         response = s.get(self._pdf_url, timeout=30)
         response.raise_for_status()
-        logger.warning(f"PDF downloaded, size: {len(response.content)} bytes")
+        logger.debug(f"PDF downloaded, size: {len(response.content)} bytes}")
         
         pdf_reader = PdfReader(BytesIO(response.content))
         schedule = {}
         
-        logger.warning(f"PDF has {len(pdf_reader.pages)} pages")
+        logger.debug(f"PDF has {len(pdf_reader.pages)} pages")
         
         # Try to detect year from PDF filename or content
         year_from_url = re.search(r'20\d{2}', self._pdf_url)
@@ -192,7 +192,7 @@ class Source:
             if pdf_year not in years_to_try:
                 years_to_try.insert(0, pdf_year)
         years_to_try.append(current_year + 1)  # Also try next year
-        logger.warning(f"Will try years: {years_to_try}")
+        logger.debug(f"Will try years: {years_to_try}")
         
         # Extract text from all pages and parse dates and bins
         all_text = ""
@@ -201,51 +201,51 @@ class Source:
             # Try layout mode first, fall back to default if not supported
             try:
                 text = page.extract_text(extraction_mode="layout")
-                logger.warning(f"Page {page_num + 1}: extracted text with layout mode")
+                logger.debug(f"Page {page_num + 1}: extracted text with layout mode")
             except (TypeError, AttributeError) as e:
                 # Older pypdf versions don't support extraction_mode parameter
                 text = page.extract_text()
-                logger.warning(f"Page {page_num + 1}: extracted text with default mode (layout not supported: {e})")
+                logger.debug(f"Page {page_num + 1}: extracted text with default mode (layout not supported: {e})")
             if text:
                 all_text += text + "\n"
-                logger.warning(f"Page {page_num + 1}: extracted {len(text)} characters")
+                logger.debug(f"Page {page_num + 1}: extracted {len(text)} characters")
             else:
-                logger.warning(f"Page {page_num + 1}: no text extracted")
+                logger.debug(f"Page {page_num + 1}: no text extracted}")
         
-        logger.warning(f"Total text extracted: {len(all_text)} characters")
+        logger.debug(f"Total text extracted: {len(all_text)} characters")
         
         if not all_text.strip():
             logger.error("No text extracted from PDF at all - PDF may be image-based or encrypted")
             return schedule
         
         # Log first 1000 chars AND last 500 chars to help debug
-        logger.warning(f"First 1000 chars of PDF text: {all_text[:1000]}")
-        logger.warning(f"Last 500 chars of PDF text: {all_text[-500:]}")
+        logger.debug(f"First 1000 chars of PDF text: {all_text[:1000]}")
+        logger.debug(f"Last 500 chars of PDF text: {all_text[-500:]}")
         
         # Check if bin keywords exist ANYWHERE in the PDF
         bin_keywords = ["black", "blue", "grey", "gray", "burgundy", "brown", "green"]
         found_keywords = [kw for kw in bin_keywords if kw in all_text.lower()]
-        logger.warning(f"Bin keywords found in entire PDF: {found_keywords}")
+        logger.debug(f"Bin keywords found in entire PDF: {found_keywords}")
         
         # If NO keywords found, try alternative extraction without layout mode
         if not found_keywords:
-            logger.warning("No bin keywords found with layout mode, trying default extraction...")
+            logger.debug("No bin keywords found with layout mode, trying default extraction...")
             all_text_alt = ""
             for page_num in range(len(pdf_reader.pages)):
                 page = pdf_reader.pages[page_num]
                 text = page.extract_text()
                 if text:
                     all_text_alt += text + "\n"
-            logger.warning(f"Alternative extraction: {len(all_text_alt)} characters")
-            logger.warning(f"Alternative first 1000 chars: {all_text_alt[:1000]}")
+            logger.debug(f"Alternative extraction: {len(all_text_alt)} characters")
+            logger.debug(f"Alternative first 1000 chars: {all_text_alt[:1000]}")
             
             # Check keywords again
             found_keywords_alt = [kw for kw in bin_keywords if kw in all_text_alt.lower()]
-            logger.warning(f"Alternative extraction bin keywords: {found_keywords_alt}")
+            logger.debug(f"Alternative extraction bin keywords: {found_keywords_alt}")
             
             # Use alternative text if it has more keywords
             if len(found_keywords_alt) > len(found_keywords):
-                logger.warning("Using alternative extraction as it has more bin keywords")
+                logger.debug("Using alternative extraction as it has more bin keywords")
                 all_text = all_text_alt
                 found_keywords = found_keywords_alt
         
@@ -267,7 +267,7 @@ class Source:
                     continue
         
         all_pdf_dates.sort()
-        logger.warning(f"Found {len(all_pdf_dates)} unique dates in PDF")
+        logger.debug(f"Found {len(all_pdf_dates)} unique dates in PDF")
         
         if not all_pdf_dates:
             logger.error("No dates found in PDF")
@@ -278,7 +278,7 @@ class Source:
         # Strategy: Use known 4-week pattern and match dates to it
         
         # Log first 10 dates for debugging
-        logger.warning(f"First 10 PDF dates: {all_pdf_dates[:10]}")
+        logger.debug(f"First 10 PDF dates: {all_pdf_dates[:10]}")
         
         # Match dates to the 4-week pattern using interval analysis
         # Week 0: Black, Week 1: Grey+Burgundy, Week 2: Black, Week 3: Blue+Burgundy
@@ -297,7 +297,7 @@ class Source:
             else:  # cycle_pos == 3
                 schedule[date_obj] = "blue+burgundy"
         
-        logger.warning(f"Assigned bins to {len(schedule)} dates using week-based pattern")
+        logger.debug(f"Assigned bins to {len(schedule)} dates using week-based pattern")
         
         if not schedule:
             logger.error(
