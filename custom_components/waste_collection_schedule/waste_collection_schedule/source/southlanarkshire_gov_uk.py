@@ -176,7 +176,7 @@ class Source:
         logger.warning(f"Downloading PDF from: {self._pdf_url}")
         response = s.get(self._pdf_url, timeout=30)
         response.raise_for_status()
-        logger.warning(f"PDF downloaded, size: {len(response.content)} bytes}")
+        logger.warning(f"PDF downloaded, size: {len(response.content)} bytes")
         
         pdf_reader = PdfReader(BytesIO(response.content))
         schedule = {}
