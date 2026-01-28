@@ -171,27 +171,38 @@ class Source:
         pdf_reader = PdfReader(BytesIO(response.content))
         schedule = {}
         
+        # Try to detect year from PDF filename or content
+        year_from_url = re.search(r'20\d{2}', self._pdf_url)
+        current_year = datetime.now().year
+        years_to_try = [current_year]
+        if year_from_url:
+            pdf_year = int(year_from_url.group())
+            if pdf_year not in years_to_try:
+                years_to_try.insert(0, pdf_year)
+        years_to_try.append(current_year + 1)  # Also try next year
+        
         # Extract text from all pages and parse dates and bins
         for page_num in range(len(pdf_reader.pages)):
             page = pdf_reader.pages[page_num]
             text = page.extract_text()
             
             # Look for date patterns and associated bins
-            # Format: Date followed by bin types
             lines = text.split('\n')
             for i, line in enumerate(lines):
                 # Look for date patterns (e.g., "Monday 5 January")
                 date_match = re.search(r'(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\s+(\d{1,2})\s+(January|February|March|April|May|June|July|August|September|October|November|December)', line)
                 if date_match:
                     day_name, day, month = date_match.groups()
-                    # Try to parse the date with current year
-                    try:
-                        date_obj = datetime.strptime(f"{day} {month} 2026", "%d %B %Y").date()
-                        bins_for_this_week = self._identify_bins_from_pdf_lines(lines, i)
-                        if bins_for_this_week:
-                            schedule[date_obj] = bins_for_this_week
-                    except ValueError:
-                        continue
+                    # Try multiple years
+                    for year in years_to_try:
+                        try:
+                            date_obj = datetime.strptime(f"{day} {month} {year}", "%d %B %Y").date()
+                            bins_for_this_week = self._identify_bins_from_pdf_lines(lines, i)
+                            if bins_for_this_week:
+                                schedule[date_obj] = bins_for_this_week
+                                break  # Stop trying years once we succeed
+                        except ValueError:
+                            continue
         
         return schedule
     
@@ -215,25 +226,37 @@ class Source:
     
     def _determine_cycle_position(self, current_week_date, pdf_schedule):
         """Determine where in the 4-week cycle we are based on PDF data."""
-        # Find entries from PDF that are closest to current week
-        sorted_dates = sorted([d for d in pdf_schedule.keys() if d >= current_week_date - timedelta(days=30)])
+        if not pdf_schedule:
+            raise Exception("PDF schedule is empty - could not parse any dates from PDF. Please verify the PDF URL is correct and accessible.")
+        
+        # Find entries from PDF that are closest to current week (look back 60 days, forward 180 days)
+        all_dates = list(pdf_schedule.keys())
+        sorted_dates = sorted([d for d in all_dates if current_week_date - timedelta(days=60) <= d <= current_week_date + timedelta(days=180)])
         
         if not sorted_dates:
-            raise Exception("Could not find current week in PDF schedule")
+            # Provide helpful error with actual dates found
+            date_range = f"{min(all_dates)} to {max(all_dates)}" if all_dates else "none"
+            raise Exception(
+                f"Could not find current week ({current_week_date}) in PDF schedule. "
+                f"PDF contains dates from {date_range}. "
+                f"Current date: {datetime.now().date()}. "
+                f"Please ensure you're using the correct year's PDF."
+            )
         
-        # Get the bin combination for the current week from PDF
-        pdf_week_date = sorted_dates[0]
+        # Find the date closest to current week
+        pdf_week_date = min(sorted_dates, key=lambda d: abs(d - current_week_date))
         current_week_type = pdf_schedule[pdf_week_date]
         
         # Get the next few weeks from PDF to establish the cycle
         cycle_from_pdf = []
         for i in range(4):
             check_date = pdf_week_date + timedelta(weeks=i)
-            # Find closest matching date
-            closest = min([d for d in pdf_schedule.keys() if d >= check_date - timedelta(days=7)], 
-                         key=lambda d: abs(d - check_date), default=None)
-            if closest and closest in pdf_schedule:
-                cycle_from_pdf.append(pdf_schedule[closest])
+            # Find closest matching date within 7 days
+            candidates = [d for d in all_dates if abs((d - check_date).days) <= 7]
+            if candidates:
+                closest = min(candidates, key=lambda d: abs(d - check_date))
+                if closest in pdf_schedule:
+                    cycle_from_pdf.append(pdf_schedule[closest])
         
         # Map cycle_from_pdf to a position (0-3) based on known patterns
         if len(cycle_from_pdf) >= 2:
