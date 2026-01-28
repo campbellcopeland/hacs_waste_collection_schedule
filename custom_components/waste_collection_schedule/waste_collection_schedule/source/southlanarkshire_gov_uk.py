@@ -142,17 +142,16 @@ class Source:
         days_to_collection = (collection_day_num - current_week_start.weekday()) % 7
         current_collection_date = current_week_start + timedelta(days=days_to_collection)
         
-        logger.warning(f"Current week start: {current_week_start}, Collection day: {collection_day}, First collection date: {current_collection_date}")
-        logger.warning(f"Bins this week from website: {bins_this_week}")
+        logger.debug(f"Current week start: {current_week_start}, Collection day: {collection_day}, First collection date: {current_collection_date}")
+        logger.debug(f"Bins this week from website: {bins_this_week}")
         
         # Parse PDF to determine position in 4-week cycle
         pdf_schedule = self._parse_pdf_schedule()
         cycle_position = self._determine_cycle_position(current_week_start, pdf_schedule, bins_this_week)
         pattern_cycle = self._get_pattern_from_cycle_position(cycle_position)
         
-        logger.warning(f"Website bins: {bins_this_week}, Detected position: {cycle_position}, Expected pattern at position 0: {pattern_cycle[0]}")
-        
-        logger.warning(f"Cycle position detected: {cycle_position}, Pattern: {pattern_cycle}")
+        logger.debug(f"Website bins: {bins_this_week}, Detected position: {cycle_position}, Expected pattern at position 0: {pattern_cycle[0]}")
+        logger.debug(f"Cycle position detected: {cycle_position}, Pattern: {pattern_cycle}")
         
         collections = []
         for week_offset in range(52):
@@ -173,10 +172,10 @@ class Source:
         
         collections.sort(key=get_sort_key)
         
-        # Log first 20 collections being passed to HA calendar
-        logger.warning(f"Total collections being sent to HA: {len(collections)}")
+        # Log first 20 collections being passed to HA calendar (debug level)
+        logger.debug(f"Total collections being sent to HA: {len(collections)}")
         for i, collection in enumerate(collections[:20]):
-            logger.warning(f"  [{i+1}] {collection.date} ({collection.date.strftime('%A')}): {collection.type} (icon: {collection.icon})")
+            logger.debug(f"  [{i+1}] {collection.date} ({collection.date.strftime('%A')}): {collection.type} (icon: {collection.icon})")
         
         return collections
     
@@ -362,7 +361,7 @@ class Source:
         
         # Convert website bins to standardized type
         current_week_type = self._identify_bin_combination(bins_this_week)
-        logger.warning(f"Current week bin type from website: {current_week_type}")
+        logger.debug(f"Current week bin type from website: {current_week_type}")
         
         # The base pattern is always: Black, Grey+Burgundy, Black, Blue+Burgundy
         # Determine which position in this cycle we're currently at
@@ -377,7 +376,7 @@ class Source:
         # If there are multiple possible positions (e.g., black at 0 or 2),
         # use the PDF to disambiguate by checking the next week
         if len(possible_positions) > 1:
-            logger.warning(f"Multiple possible positions for {current_week_type}: {possible_positions}, checking PDF for next week...")
+            logger.debug(f"Multiple possible positions for {current_week_type}: {possible_positions}, checking PDF for next week...")
             all_dates = list(pdf_schedule.keys())
             # Find the closest date to next week
             next_week_date = current_week_date + timedelta(weeks=1)
@@ -385,7 +384,7 @@ class Source:
             if candidates:
                 closest_next = min(candidates, key=lambda d: abs(d - next_week_date))
                 next_week_type = pdf_schedule.get(closest_next, "black")
-                logger.warning(f"Next week PDF type: {next_week_type}")
+                logger.debug(f"Next week PDF type: {next_week_type}")
                 
                 # Check which position sequence matches
                 if current_week_type == "black":
@@ -402,7 +401,7 @@ class Source:
         else:
             position = possible_positions[0]
         
-        logger.warning(f"Determined cycle position: {position}")
+        logger.debug(f"Determined cycle position: {position}")
         return position
     
     def _get_pattern_from_cycle_position(self, position):
