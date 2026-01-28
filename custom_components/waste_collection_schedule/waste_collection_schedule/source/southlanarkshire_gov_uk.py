@@ -12,7 +12,7 @@ DESCRIPTION = "Source for South Lanarkshire Council waste collection."
 URL = "https://www.southlanarkshire.gov.uk"
 
 HOW_TO_GET_ARGUMENTS_DESCRIPTION = {
-    "en": "Find your street on the South Lanarkshire website. The URL format is \`.../directory_record/574605/clincarthill_road_rutherglen\`. Record ID is \`574605\` and Street Name is \`clincarthill_road_rutherglen\`.",
+    "en": "Find your street on the South Lanarkshire website. The URL format is `.../directory_record/574605/clincarthill_road_rutherglen`. Record ID is `574605` and Street Name is `clincarthill_road_rutherglen`.",
 }
 
 PARAM_TRANSLATIONS = {
@@ -182,27 +182,50 @@ class Source:
         years_to_try.append(current_year + 1)  # Also try next year
         
         # Extract text from all pages and parse dates and bins
+        all_text = ""
         for page_num in range(len(pdf_reader.pages)):
             page = pdf_reader.pages[page_num]
-            text = page.extract_text()
+            text = page.extract_text(extraction_mode="layout")
+            if text:
+                all_text += text + "\n"
+        
+        # Try multiple date patterns to handle different PDF formats
+        date_patterns = [
+            r'(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\s+(\d{1,2})\s+(January|February|March|April|May|June|July|August|September|October|November|December)',
+            r'(\d{1,2})\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)',
+            r'(\d{1,2})/(\d{1,2})/(20\d{2})',  # DD/MM/YYYY format
+        ]
+        
+        lines = all_text.split('\n')
+        for i, line in enumerate(lines):
+            # Try first pattern: "Monday 5 January"
+            date_match = re.search(date_patterns[0], line)
+            if date_match:
+                day_name, day, month = date_match.groups()
+                for year in years_to_try:
+                    try:
+                        date_obj = datetime.strptime(f"{day} {month} {year}", "%d %B %Y").date()
+                        bins_for_this_week = self._identify_bins_from_pdf_lines(lines, i)
+                        if bins_for_this_week:
+                            schedule[date_obj] = bins_for_this_week
+                            break
+                    except ValueError:
+                        continue
+                continue
             
-            # Look for date patterns and associated bins
-            lines = text.split('\n')
-            for i, line in enumerate(lines):
-                # Look for date patterns (e.g., "Monday 5 January")
-                date_match = re.search(r'(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\s+(\d{1,2})\s+(January|February|March|April|May|June|July|August|September|October|November|December)', line)
-                if date_match:
-                    day_name, day, month = date_match.groups()
-                    # Try multiple years
-                    for year in years_to_try:
-                        try:
-                            date_obj = datetime.strptime(f"{day} {month} {year}", "%d %B %Y").date()
-                            bins_for_this_week = self._identify_bins_from_pdf_lines(lines, i)
-                            if bins_for_this_week:
-                                schedule[date_obj] = bins_for_this_week
-                                break  # Stop trying years once we succeed
-                        except ValueError:
-                            continue
+            # Try second pattern: "5 January Monday"
+            date_match = re.search(date_patterns[1], line)
+            if date_match:
+                day, month, day_name = date_match.groups()
+                for year in years_to_try:
+                    try:
+                        date_obj = datetime.strptime(f"{day} {month} {year}", "%d %B %Y").date()
+                        bins_for_this_week = self._identify_bins_from_pdf_lines(lines, i)
+                        if bins_for_this_week:
+                            schedule[date_obj] = bins_for_this_week
+                            break
+                    except ValueError:
+                        continue
         
         return schedule
     
