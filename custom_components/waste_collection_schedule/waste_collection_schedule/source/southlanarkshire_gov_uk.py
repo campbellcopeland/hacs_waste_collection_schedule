@@ -218,13 +218,36 @@ class Source:
             logger.error("No text extracted from PDF at all - PDF may be image-based or encrypted")
             return schedule
         
-        # Log first 500 chars to help debug
-        logger.warning(f"First 500 chars of PDF text: {all_text[:500]}")
+        # Log first 1000 chars AND last 500 chars to help debug
+        logger.warning(f"First 1000 chars of PDF text: {all_text[:1000]}")
+        logger.warning(f"Last 500 chars of PDF text: {all_text[-500:]}")
         
         # Check if bin keywords exist ANYWHERE in the PDF
         bin_keywords = ["black", "blue", "grey", "gray", "burgundy", "brown", "green"]
         found_keywords = [kw for kw in bin_keywords if kw in all_text.lower()]
         logger.warning(f"Bin keywords found in entire PDF: {found_keywords}")
+        
+        # If NO keywords found, try alternative extraction without layout mode
+        if not found_keywords:
+            logger.warning("No bin keywords found with layout mode, trying default extraction...")
+            all_text_alt = ""
+            for page_num in range(len(pdf_reader.pages)):
+                page = pdf_reader.pages[page_num]
+                text = page.extract_text()
+                if text:
+                    all_text_alt += text + "\n"
+            logger.warning(f"Alternative extraction: {len(all_text_alt)} characters")
+            logger.warning(f"Alternative first 1000 chars: {all_text_alt[:1000]}")
+            
+            # Check keywords again
+            found_keywords_alt = [kw for kw in bin_keywords if kw in all_text_alt.lower()]
+            logger.warning(f"Alternative extraction bin keywords: {found_keywords_alt}")
+            
+            # Use alternative text if it has more keywords
+            if len(found_keywords_alt) > len(found_keywords):
+                logger.warning("Using alternative extraction as it has more bin keywords")
+                all_text = all_text_alt
+                found_keywords = found_keywords_alt
         
         # Try multiple date patterns to handle different PDF formats
         lines = all_text.split('\n')
