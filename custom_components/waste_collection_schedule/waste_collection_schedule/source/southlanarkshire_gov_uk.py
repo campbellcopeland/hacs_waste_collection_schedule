@@ -173,7 +173,7 @@ class Source:
         # Log first 20 collections being passed to HA calendar
         logger.warning(f"Total collections being sent to HA: {len(collections)}")
         for i, collection in enumerate(collections[:20]):
-            logger.warning(f"  [{i+1}] {collection.date} ({collection.date.strftime('%A')}): {collection.t} (icon: {collection.icon})")
+            logger.warning(f"  [{i+1}] {collection.date} ({collection.date.strftime('%A')}): {collection.type} (icon: {collection.icon})")
         
         return collections
     
