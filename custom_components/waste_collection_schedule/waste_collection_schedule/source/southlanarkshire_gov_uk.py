@@ -299,8 +299,6 @@ class Source:
         
         logger.warning(f"Assigned bins to {len(schedule)} dates using week-based pattern")
         
-        logger.info(f"PDF parsing complete: found {dates_found} dates with bins out of {len(schedule)} total")
-        
         if not schedule:
             logger.error(
                 "No dates with bins found in PDF. "
