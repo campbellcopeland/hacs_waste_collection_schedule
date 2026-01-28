@@ -173,15 +173,15 @@ class Source:
         s.headers.update({"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
         
         # Add timeout to prevent hanging in Home Assistant
-        logger.debug(f"Downloading PDF from: {self._pdf_url}")
+        logger.warning(f"Downloading PDF from: {self._pdf_url}")
         response = s.get(self._pdf_url, timeout=30)
         response.raise_for_status()
-        logger.debug(f"PDF downloaded, size: {len(response.content)} bytes")
+        logger.warning(f"PDF downloaded, size: {len(response.content)} bytes}")
         
         pdf_reader = PdfReader(BytesIO(response.content))
         schedule = {}
         
-        logger.debug(f"PDF has {len(pdf_reader.pages)} pages")
+        logger.warning(f"PDF has {len(pdf_reader.pages)} pages")
         
         # Try to detect year from PDF filename or content
         year_from_url = re.search(r'20\d{2}', self._pdf_url)
@@ -192,7 +192,7 @@ class Source:
             if pdf_year not in years_to_try:
                 years_to_try.insert(0, pdf_year)
         years_to_try.append(current_year + 1)  # Also try next year
-        logger.debug(f"Will try years: {years_to_try}")
+        logger.warning(f"Will try years: {years_to_try}")
         
         # Extract text from all pages and parse dates and bins
         all_text = ""
@@ -201,25 +201,25 @@ class Source:
             # Try layout mode first, fall back to default if not supported
             try:
                 text = page.extract_text(extraction_mode="layout")
-                logger.debug(f"Page {page_num + 1}: extracted text with layout mode")
+                logger.warning(f"Page {page_num + 1}: extracted text with layout mode")
             except (TypeError, AttributeError) as e:
                 # Older pypdf versions don't support extraction_mode parameter
                 text = page.extract_text()
-                logger.debug(f"Page {page_num + 1}: extracted text with default mode (layout not supported: {e})")
+                logger.warning(f"Page {page_num + 1}: extracted text with default mode (layout not supported: {e})")
             if text:
                 all_text += text + "\n"
-                logger.debug(f"Page {page_num + 1}: extracted {len(text)} characters")
+                logger.warning(f"Page {page_num + 1}: extracted {len(text)} characters")
             else:
                 logger.warning(f"Page {page_num + 1}: no text extracted")
         
-        logger.debug(f"Total text extracted: {len(all_text)} characters")
+        logger.warning(f"Total text extracted: {len(all_text)} characters")
         
         if not all_text.strip():
             logger.error("No text extracted from PDF at all - PDF may be image-based or encrypted")
             return schedule
         
         # Log first 500 chars to help debug
-        logger.debug(f"First 500 chars of PDF text: {all_text[:500]}")
+        logger.warning(f"First 500 chars of PDF text: {all_text[:500]}")
         
         # Try multiple date patterns to handle different PDF formats
         date_patterns = [
@@ -229,7 +229,7 @@ class Source:
         ]
         
         lines = all_text.split('\n')
-        logger.debug(f"Split into {len(lines)} lines")
+        logger.warning(f"Split into {len(lines)} lines")
         
         dates_found = 0
         for i, line in enumerate(lines):
@@ -244,10 +244,10 @@ class Source:
                         if bins_for_this_week:
                             schedule[date_obj] = bins_for_this_week
                             dates_found += 1
-                            logger.debug(f"Found date {date_obj} with bins: {bins_for_this_week}")
+                            logger.warning(f"Found date {date_obj} with bins: {bins_for_this_week}")
                             break
                         else:
-                            logger.debug(f"Found date {date_obj} but no bins identified")
+                            logger.warning(f"Found date {date_obj} but no bins identified")
                     except ValueError:
                         continue
                 continue
@@ -263,10 +263,10 @@ class Source:
                         if bins_for_this_week:
                             schedule[date_obj] = bins_for_this_week
                             dates_found += 1
-                            logger.debug(f"Found date {date_obj} with bins: {bins_for_this_week}")
+                            logger.warning(f"Found date {date_obj} with bins: {bins_for_this_week}")
                             break
                         else:
-                            logger.debug(f"Found date {date_obj} but no bins identified")
+                            logger.warning(f"Found date {date_obj} but no bins identified")
                     except ValueError:
                         continue
         
