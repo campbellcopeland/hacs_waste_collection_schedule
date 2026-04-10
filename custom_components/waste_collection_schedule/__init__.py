@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import logging
+import site
+from pathlib import Path
 from typing import Any
 
 import voluptuous as vol
@@ -10,6 +12,10 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 _LOGGER = logging.getLogger(__name__)
+
+# Ensure bundled package imports like `waste_collection_schedule.*` resolve.
+package_dir = Path(__file__).resolve().parent
+site.addsitedir(str(package_dir))
 
 
 def _load_yaml_setup() -> tuple[Any, Any]:
