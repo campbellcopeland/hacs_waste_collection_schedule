@@ -46,15 +46,8 @@ TEST_CASES = {
         "house_number": "1",
         "service": "hvcgroep",
     },
-    "Mijnblink": {
-        "postal_code": "5741BV",
-        "house_number": "76",
-        "service": "mijnblink",
-    },
-    "ZRD": {
-        "postal_code": "4691DH", 
-        "house_number": "4", 
-        "service": "zrd"},
+    "Reinis": {"postal_code": "3201AA", "house_number": "1", "service": "reinis"},
+    "ZRD": {"postal_code": "4691DH", "house_number": "4", "service": "zrd"},
 }
 
 _LOGGER = logging.getLogger(__name__)
@@ -163,16 +156,6 @@ SERVICE_MAP = [
         },
     },
     {
-        "title": "Mijn Blink",
-        "api_url": "https://mijnblink.nl",
-        "icons": {
-            "zak-grijs-rest": "mdi:trash-can",
-            "appel-gft": "mdi:leaf",
-            "blik-metaal-melkpak-drankpak-zak-oranje-plastic": "mdi:recycle",
-            "doos-karton-papier": "mdi:archive",
-        },
-    },
-    {
         "title": "Gemeente Peel en Maas",
         "api_url": "https://afvalkalender.peelenmaas.nl",
         "icons": {
@@ -263,13 +246,23 @@ SERVICE_MAP = [
         },
     },
     {
+        "title": "Reinis",
+        "api_url": "https://reinis.nl",
+        "icons": {
+            "appel-gft": "mdi:leaf",
+            "plastic-pak-blik": "mdi:recycle",
+            "doos-karton-papier": "mdi:archive",
+            "kliko-grijs-zak-grijs-rest": "mdi:trash-can",
+        },
+    },
+    {
         "title": "ZRD",
         "api_url": "https://www.zrd.nl",
         "icons": {
-            "appel en blad": "mdi:leaf",         # GFT-afval
-            "pet pak blik": "mdi:recycle",       # PMD
-            "zak rest rest": "mdi:trash-can",    # Restafval
-            "karton": "mdi:archive",             # Papier en karton
+            "appel en blad": "mdi:leaf",  # GFT-afval
+            "pet pak blik": "mdi:recycle",  # PMD
+            "zak rest rest": "mdi:trash-can",  # Restafval
+            "karton": "mdi:archive",  # Papier en karton
         },
     },
 ]

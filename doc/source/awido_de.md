@@ -42,6 +42,19 @@ waste_collection_schedule:
         housenumber: 14
 ```
 
+## Additional Attributes
+
+For special waste collection events such as the **Schadstoffmobil** (hazardous waste mobile), the following extra attributes are provided on the sensor entity when available:
+
+| Attribute | Description |
+|-----------|-------------|
+| `location` | The specific address/location for this collection event |
+| `description` | Additional information about the event |
+| `start_time` | Start time of the event (e.g. `"09:00"`) – only for timed events |
+| `end_time` | End time of the event (e.g. `"11:00"`) – only for timed events |
+
+These attributes allow differentiating between multiple Schadstoffmobil stops on the same day at different locations and times.
+
 ## How to get the source arguments
 
 ### customer
@@ -59,7 +72,30 @@ List of customers (2021-07-09):
 - `azv-hef-rof`: Abfallwirtschafts-Zweckverband des Landkreises Hersfeld-Rotenburg
 - `bgl`: Landkreis Berchtesgadener Land
 - `coburg`: Landkreis Coburg
-- `ebe`: Landkreis Ebersberg
+- `ebe`: Anzing
+- `ebe`: Aßling
+- `ebe`: Baiern
+- `ebe`: Bruck
+- `ebe`: Ebersberg
+- `ebe`: Egmating
+- `ebe`: Emmering
+- `ebe`: Forstinning
+- `ebe`: Frauenneuharting
+- `ebe`: Glonn
+- `ebe`: Grafing
+- `ebe`: Hohenlinden
+- `ebe`: Kirchseeon
+- `ebe`: Moosach
+- `ebe`: Oberpframmern
+- `ebe`: Pliening
+- `ebe`: Poing
+- `ebe`: Steinhöring
+- `ebe`: Vaterstetten
+- `ebe`: Zorneding
+- `ebe`: Ingelsberg (Zorneding)
+- `ebe`: Markt Schwaben
+- `ebe`: Pöring (Zorneding)
+- `ebe`: Wolfesing (Zorneding)
 - `erding`: Landkreis Erding
 - `eww-suew`: Landkreis Südliche Weinstraße
 - `ffb`: AWB Landkreis Fürstenfeldbruck
@@ -75,6 +111,7 @@ List of customers (2021-07-09):
 - `kronach`: Landkreis Kronach
 - `kulmbach`: Landkreis Kulmbach
 - `landkreisbetriebe`: Landkreisbetriebe Neuburg-Schrobenhausen
+- `lichtenfels`: Landkreis Lichtenfels
 - `lkgi`: Landkreis Gießen
 - `lra-ab`: Landkreis Aschaffenburg
 - `lra-dah`: Landratsamt Dachau

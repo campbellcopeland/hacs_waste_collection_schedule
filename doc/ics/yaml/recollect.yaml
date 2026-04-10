@@ -9,6 +9,9 @@ extra_info:
   - title: City of Cambridge
     url: www.cambridgema.gov
     country: us
+  - title: City of Lowell, MA
+    url: https://www.lowellma.gov
+    country: us
   - title: City of Bloomington
     url: https://bloomington.in.gov
     country: us
@@ -108,6 +111,33 @@ extra_info:
   - title: Redcar & Cleveland, UK
     url: https://www.redcar-cleveland.gov.uk/
     country: uk
+  - title: City of Denver, CO
+    url: https://www.denvergov.org
+    country: us
+  - title: Sacramento County, CA
+    url: https://wmr.saccounty.gov
+    country: us
+  - title: Markham, ON
+    url: https://www.markham.ca
+    country: ca
+  - title: Muskoka District (Huntsville, ON)
+    url: https://www.muskoka.on.ca
+    country: ca
+  - title: St Clair Township, ON
+    url: https://www.stclairtownship.ca
+    country: ca
+  - title: Castlegar, BC
+    url: https://www.castlegar.ca
+    country: ca
+  - title: Durham Region, ON
+    url: https://www.durham.ca
+    country: ca
+  - title: City of Kingston, ON
+    url: https://www.cityofkingston.ca
+    country: ca
+  - title: City of Guelph, ON
+    url: https://www.guelph.ca
+    country: ca
 
 howto:
   en: |
@@ -126,6 +156,7 @@ howto:
     |Simcoe County, ON|Canada|[simcoe.ca](https://www.simcoe.ca/dpt/swm/when)|
     |City of Bloomington, IN|USA|[api.recollect.net/r/area/bloomingtonin](https://api.recollect.net/r/area/bloomingtonin)|
     |City of Cambridge, MA|USA|[cambridgema.gov](https://www.cambridgema.gov/services/curbsidecollections)|
+    |City of Lowell, MA|USA|[lowellma.gov](https://www.lowellma.gov/195/Solid-Waste-Recycling)|
     |City of Georgetown, TX|USA|[texasdisposal.com](https://www.texasdisposal.com/waste-wizard/)|
     |City of Vancouver|Canada|[vancouver.ca](https://vancouver.ca/home-property-development/garbage-and-recycling-collection-schedules.aspx)|
     |City of Nanaimo|Canada|[nanaimo.ca](https://www.nanaimo.ca/city-services/garbage-recycling/collectionschedule)|
@@ -205,4 +236,7 @@ test_cases:
     split_at: '\, (?:and )?|(?: and )'
   Recology San Francisco:
     url: webcal://recollect-us.global.ssl.fastly.net/api/places/F8DA6588-B076-11E8-BA4B-30AA635824F2/services/265/events.en-US.ics?client_id=79B7D646-3A76-11F0-91E0-BB51B3DF21C3
+    split_at: '\, (?:and )?|(?: and )'
+  Denver, CO, USA:
+    url: "https://recollect-us.global.ssl.fastly.net/api/places/464342A6-3CBF-11E5-9D27-D51A47A8A7C0/services/248/events.en-US.ics"
     split_at: '\, (?:and )?|(?: and )'
