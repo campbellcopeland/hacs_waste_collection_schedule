@@ -25,8 +25,28 @@ TEST_CASES = {
         "house_number": 2,
         "street_code": 2469,
         "county_id": 3024,
-    }
+    },
+    "Lillehammer Åsmarkvegen 111": {
+        "street_name": "Åsmarkvegen",
+        "house_number": 111,
+        "street_code": 6530,
+        "county_id": 3405,
+    },
 }
+
+EXTRA_INFO = [
+    {
+        "title": "ROAF (Romerike Avfallsforedling IKS)",
+        "url": "https://www.roaf.no",
+        "country": "no",
+        "default_params": {
+            "street_name": "Solvangen",
+            "house_number": 2,
+            "street_code": 12950,
+            "county_id": 3205,
+        },
+    },
+]
 
 API_URL = (
     "https://norkartrenovasjon.azurewebsites.net/proxyserver.ashx?server="

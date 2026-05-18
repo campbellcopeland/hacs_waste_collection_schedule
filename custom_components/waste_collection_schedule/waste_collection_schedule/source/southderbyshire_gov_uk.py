@@ -1,9 +1,10 @@
 import re
 from datetime import datetime
 
-import requests
 from bs4 import BeautifulSoup
+from curl_cffi import requests
 from waste_collection_schedule import Collection
+from waste_collection_schedule.exceptions import SourceArgumentNotFound
 
 TITLE = "South Derbyshire District Council"
 DESCRIPTION = "Source for www.southderbyshire.gov.uk services for South Derbyshire "
@@ -36,7 +37,7 @@ class Source:
     def fetch(self):
         entries = []
 
-        session = requests.Session()
+        session = requests.Session(impersonate="chrome")
 
         r = session.get(f"{API_URL}{self._uprn}")
         soup = BeautifulSoup(
@@ -45,7 +46,7 @@ class Source:
         collections = soup.find_all("div", recursive=False)
 
         if not collections:
-            raise Exception("No collections found for given UPRN")
+            raise SourceArgumentNotFound("uprn", self._uprn)
 
         for collection in collections:
             bintypes = re.findall(

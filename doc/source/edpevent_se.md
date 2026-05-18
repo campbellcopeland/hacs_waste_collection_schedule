@@ -15,6 +15,7 @@ This integration now also supports the municipalities of Boden and Skellefteå.
 - `lycksele-kommun`: Lycksele Kommun
 - `marks-kommun`: Marks kommun
 - `nodra`: Nodra
+- `nvoa`: NVOA - Nacka Vatten och Avfall
 - `orebro-kommun`: Örebro kommun
 - `orust-kommun`: Orust kommun
 - `roslagsvatten`: Roslagsvatten
@@ -22,6 +23,7 @@ This integration now also supports the municipalities of Boden and Skellefteå.
 - `ssam`: SSAM Södra Smalånds Avfall & Miljö
 - `stenungsund-kommun`: Stenungsunds kommun
 - `uppsalavatten`: Uppsala Vatten
+- `vafabmiljo`: Vafab Miljö
 <!--End of service section-->
 
 ## Configuration via configuration.yaml

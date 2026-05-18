@@ -110,6 +110,14 @@ TEST_CASES = {
         "street_address": "Vårgårda Herrgård, VÅRGÅRDA",
         "url": "https://edpfuture.remondis.se/EDPFutureWeb/SimpleWastePickup",
     },
+    "Vafab Miljö - Test": {
+        "street_address": "Gasverksgatan 7, Västerås",
+        "service_provider": "vafabmiljo",
+    },
+    "NVOA - Nacka (Fogdevägen)": {
+        "street_address": "Fogdevägen 13, Saltsjö-Duvnäs",
+        "service_provider": "nvoa",
+    },
 }
 
 COUNTRY = "se"
@@ -233,6 +241,16 @@ SERVICE_PROVIDERS = {
         "url": "https://www.remondisrecycling.se/hushallsavfall/herrljunga-vargarda/",
         "api_url": "https://edpfuture.remondis.se/EDPFutureWeb/SimpleWastePickup",
     },
+    "vafabmiljo": {
+        "title": "Vafab Miljö",
+        "url": "https://vafabmiljo.se",
+        "api_url": "https://services.vafabmiljo.se/FutureWebVKFHus/SimpleWastePickup",
+    },
+    "nvoa": {
+        "title": "NVOA - Nacka Vatten och Avfall",
+        "url": "https://www.nacka.se/nackavattenavfall/avfall/sophamtning/tomningsdag/",
+        "api_url": "https://futureweb.nvoa.se/EDP/FutureWebBasic/SimpleWastePickup",
+    },
 }
 
 EXTRA_INFO = [
@@ -353,15 +371,15 @@ class Source:
             waste_type = (
                 waste_type_prefix
                 + ", "
-                + item["BinType"]["ContainerType"]
+                + (item["BinType"]["ContainerType"] or "")
                 + " "
-                + str(item["BinType"]["Size"])
-                + item["BinType"]["Unit"]
+                + (str(item["BinType"]["Size"]) or "")
+                + (item["BinType"]["Unit"] or "")
             )
             # Get the icon for the waste type, default to help icon if not found
             icon = ICON_MAP.get(item["WasteType"], "mdi:help")
 
-            found = found = any(
+            found = any(
                 x.date == next_pickup_date and x.type == waste_type for x in entries
             )
             if not found:

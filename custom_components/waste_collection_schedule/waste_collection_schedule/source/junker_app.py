@@ -17,6 +17,7 @@ COUNTRY = "it"
 
 
 SERVICE_PROVIDERS = {
+    "NET SpA - Udine",
     "Unione dei Comuni di Valmalenco",
     "Bubbiano",
     "Econova Srl",
@@ -29,7 +30,6 @@ SERVICE_PROVIDERS = {
     "Buonvicino",
     "Chiaramonte Gulfi - Mecogest",
     "Valle Umbra Servizi S.p.A.",
-    "Veritas Spa",
     "Anguillara Sabazia - Cosp Tecno Service",
     "Sezze - SPL",
     "Bitti, Luna e Onanì - Formula Ambiente Spa",
@@ -322,6 +322,9 @@ SERVICE_PROVIDERS = {
     "Lodè - Eco Flap - Ciclat",
     "Toro",
     "C.C.S. - Consorzio Campale Stabile",
+    "Broni",
+    "San Cipriano Po",
+    "Stradella",
 }
 
 
@@ -344,6 +347,7 @@ TEST_CASES = {
     "Unione dei Comuni di Valmalenco, Boroneddu": {"municipality": "Boroneddu"},
     "Mosciano Sant'Angelo": {"municipality": "Mosciano Sant'Angelo"},
     "Lodè": {"municipality": "Lodè", "area": "Utenze non domestiche"},
+    "Udine": {"municipality": "Udine", "area": "Zona 2-4-5-6 - Utenze domestiche"},
 }
 
 

@@ -39,6 +39,11 @@ TEST_CASES = {
         "street": "ARGINE COPERMIO OVEST",
         "house_number": 74,
     },
+    "San Secondo Parmense BORGO DELLA ROVACCHIA 12": {
+        "city": "San Secondo Parmense",
+        "street": "BORGO DELLA ROVACCHIA",
+        "house_number": 12,
+    },
     "Torino Corso Quintino Sella 11 Scala A": {
         "city": "Torino",
         "street": "Corso Quintino Sella",
@@ -117,6 +122,8 @@ class Holiday(TypedDict):
 class CollectionItem(TypedDict):
     Materiale: str
     ICalRRule: str
+    IdFrequenza: str
+    FlagFreq: str
     FestivitaCalendario: list[Holiday]
     NonVisibile: bool
 
@@ -233,6 +240,23 @@ class Source:
         r.raise_for_status()
         return r.json()
 
+    @staticmethod
+    def _fortnightly_dtstart(flag_freq: str, year: int) -> datetime:
+        """Compute DTSTART for fortnightly (2S) schedules.
+
+        Iren aligns odd/even weeks to ISO week numbers.
+        FlagFreq 'N' → dispari (odd ISO weeks); FlagFreq 'P' → pari (even ISO weeks).
+        The first Monday of the year may fall in an even or odd ISO week depending
+        on the year, so we check and shift by one week if needed.
+        """
+        jan1 = datetime(year, 1, 1)
+        first_monday = jan1 + timedelta(days=(7 - jan1.weekday()) % 7)
+        first_monday_is_odd = first_monday.isocalendar()[1] % 2 == 1
+        want_odd = flag_freq == "N"
+        if first_monday_is_odd != want_odd:
+            first_monday += timedelta(weeks=1)
+        return first_monday
+
     def _get_collections(self) -> list[Collection]:
         if not self._address_id:
             raise ValueError("address id not set")
@@ -264,6 +288,19 @@ class Source:
                         "%Y%m%dT%H%M%SZ",
                     )
                 rulestr = DTSTART_REGEX.sub("", rulestr).strip(";")
+
+            # Fix fortnightly schedules: the API returns FREQ=WEEKLY but
+            # IdFrequenza="2S" indicates every 2 weeks.  Inject INTERVAL=2
+            # and compute the correct DTSTART for odd/even week alignment.
+            if (
+                item.get("IdFrequenza") == "2S"
+                and "INTERVAL" not in rulestr
+                and rulestr.startswith("RRULE:")
+            ):
+                rulestr = rulestr.replace("FREQ=WEEKLY", "FREQ=WEEKLY;INTERVAL=2")
+                start_datetime = self._fortnightly_dtstart(
+                    item.get("FlagFreq", "N"), datetime.now().year
+                )
 
             try:
                 if start_datetime:
